@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Simple static website using S3 and API gateway
+Parameters:
+  stackName:
+    Description: The stack or project name
+    Type: String
+    MinLength: 1
+    MaxLength: 50
+  bucketName:
+    Description: The S3 bucket name (lowercase letters, numbers, dots, dashes)
+    Type: String
+    MinLength: 1
+    MaxLength: 50
+
+Resources:
+
+  websiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref bucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+
+  bucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref bucketName
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref bucketName
+                - /*
+            Principal:
+              Service: "apigateway.amazonaws.com"
+            Sid: "APIProxyBucketPolicy"
+            Condition:
+              ArnLike:
+                "aws:SourceArn": !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway.RestApiId}/*/GET/"
+
+  accessPolicyToS3:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Allow GET from S3
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "s3:GetObject"
+            Resource: "*"
+
+  getBucketRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !GetAtt accessPolicyToS3.Arn
+
+  apiAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "execute-api:Invoke"
+            Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway.RestApiId}/*/GET/"
+
+  apiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      DisableExecuteApiEndpoint: false
+      EndpointConfiguration:
+        Types:
+          - "EDGE"
+      FailOnWarnings: true
+      Name: !Join
+        - '-'
+        - - !Ref stackName
+          - "api-gateway"
+      Policy: !GetAtt apiAccessPolicy.Arn
+
+  apiRootGET:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Content-Type: true
+        - StatusCode: '404'
+          ResponseParameters:
+            method.response.header.Content-Type: true
+      Integration:
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS
+        Credentials: !GetAtt getBucketRole.Arn
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/${bucketName}/index.html"
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Content-Type: integration.response.header.Content-Type
+              method.response.header.custom-header: '''hello'''
+          - StatusCode: '404'
+            ResponseParameters:
+              method.response.header.Content-Type: integration.response.header.Content-Type
+      ResourceId: !GetAtt apiGateway.RootResourceId
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+
+Outputs:
+  apiUrl:
+    Description: The URL of the API gateway
+    Value:
+      Fn::Sub: 'https://${apiGateway}.execute-api.${AWS::Region}.${AWS::URLSuffix}/'
