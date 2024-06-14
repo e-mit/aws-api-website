@@ -69,6 +69,8 @@ Resources:
   apiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
+      BinaryMediaTypes:
+        - "*/*"
       DisableExecuteApiEndpoint: false
       EndpointConfiguration:
         Types:
@@ -96,10 +98,7 @@ Resources:
           ResponseParameters:
             method.response.header.Content-Type: true
             method.response.header.Content-Length: true
-        - StatusCode: '404'
-          ResponseParameters:
-            method.response.header.Content-Type: true
-            method.response.header.Content-Length: true
+            method.response.header.Content-Encoding: false
       Integration:
         IntegrationHttpMethod: GET
         PassthroughBehavior: WHEN_NO_MATCH
@@ -111,10 +110,7 @@ Resources:
             ResponseParameters:
               method.response.header.Content-Length: integration.response.header.Content-Length
               method.response.header.Content-Type: integration.response.header.Content-Type
-          - StatusCode: '404'
-            ResponseParameters:
-              method.response.header.Content-Length: integration.response.header.Content-Length
-              method.response.header.Content-Type: integration.response.header.Content-Type
+              method.response.header.Content-Encoding: integration.response.header.Content-Encoding
       ResourceId: !GetAtt apiGateway.RootResourceId
       RestApiId: !GetAtt apiGateway.RestApiId
 
@@ -146,6 +142,7 @@ Resources:
           ResponseParameters:
             method.response.header.Content-Type: true
             method.response.header.Content-Length: true
+            method.response.header.Content-Encoding: false
       Integration:
         IntegrationHttpMethod: GET
         PassthroughBehavior: WHEN_NO_MATCH
@@ -159,5 +156,6 @@ Resources:
             ResponseParameters:
               method.response.header.Content-Length: integration.response.header.Content-Length
               method.response.header.Content-Type: integration.response.header.Content-Type
+              method.response.header.Content-Encoding: integration.response.header.Content-Encoding
       ResourceId: !Ref apiGeneralResource
       RestApiId: !GetAtt apiGateway.RestApiId
