@@ -45,17 +45,6 @@ Resources:
               ArnLike:
                 "aws:SourceArn": !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway.RestApiId}/*/GET/"
 
-  accessPolicyToS3:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      Description: Allow GET from S3
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action: "s3:GetObject"
-            Resource: "*"
-
   getBucketRole:
     Type: AWS::IAM::Role
     Properties:
@@ -68,19 +57,14 @@ Resources:
                 - apigateway.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !GetAtt accessPolicyToS3.Arn
-
-  apiAccessPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal: "*"
-            Action: "execute-api:Invoke"
-            Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway.RestApiId}/*/GET/"
+      Policies:
+        - PolicyName: bucketRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "s3:GetObject"
+                Resource: "*"
 
   apiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -94,7 +78,13 @@ Resources:
         - '-'
         - - !Ref stackName
           - "api-gateway"
-      Policy: !GetAtt apiAccessPolicy.Arn
+      Policy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "execute-api:Invoke"
+            Resource: "execute-api:/GET/*"
 
   apiRootGET:
     Type: AWS::ApiGateway::Method
@@ -118,16 +108,14 @@ Resources:
           - StatusCode: '200'
             ResponseParameters:
               method.response.header.Content-Type: integration.response.header.Content-Type
-              method.response.header.custom-header: '''hello'''
           - StatusCode: '404'
             ResponseParameters:
               method.response.header.Content-Type: integration.response.header.Content-Type
       ResourceId: !GetAtt apiGateway.RootResourceId
       RestApiId: !GetAtt apiGateway.RestApiId
 
-
-Outputs:
-  apiUrl:
-    Description: The URL of the API gateway
-    Value:
-      Fn::Sub: 'https://${apiGateway}.execute-api.${AWS::Region}.${AWS::URLSuffix}/'
+  apiDeployment:
+    DependsOn: apiRootGET
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !GetAtt apiGateway.RestApiId
