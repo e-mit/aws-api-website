@@ -56,7 +56,7 @@ delete() {
 
     STACK_DELETED=
     while [[ -z $STACK_DELETED ]]; do
-        export STACK_DELETED=$(aws aws cloudformation list-stacks | \
+        export STACK_DELETED=$(aws cloudformation list-stacks | \
         python3 -c \
 "import sys, json
 complete = True
