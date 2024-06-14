@@ -95,9 +95,11 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Content-Type: true
+            method.response.header.Content-Length: true
         - StatusCode: '404'
           ResponseParameters:
             method.response.header.Content-Type: true
+            method.response.header.Content-Length: true
       Integration:
         IntegrationHttpMethod: GET
         PassthroughBehavior: WHEN_NO_MATCH
@@ -107,16 +109,55 @@ Resources:
         IntegrationResponses:
           - StatusCode: '200'
             ResponseParameters:
+              method.response.header.Content-Length: integration.response.header.Content-Length
               method.response.header.Content-Type: integration.response.header.Content-Type
           - StatusCode: '404'
             ResponseParameters:
+              method.response.header.Content-Length: integration.response.header.Content-Length
               method.response.header.Content-Type: integration.response.header.Content-Type
       ResourceId: !GetAtt apiGateway.RootResourceId
       RestApiId: !GetAtt apiGateway.RestApiId
 
   apiDeployment:
-    DependsOn: apiRootGET
     Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - apiGeneralGET
+      - apiRootGET
     Properties:
       RestApiId: !GetAtt apiGateway.RestApiId
       StageName: v1
+
+  apiGeneralResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt apiGateway.RootResourceId
+      PathPart: '{object}'
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiGeneralGET:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      RequestParameters:
+        method.request.path.object: true
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Content-Type: true
+            method.response.header.Content-Length: true
+      Integration:
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS
+        Credentials: !GetAtt getBucketRole.Arn
+        RequestParameters:
+          integration.request.path.object: method.request.path.object
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/${bucketName}/{object}"
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Content-Length: integration.response.header.Content-Length
+              method.response.header.Content-Type: integration.response.header.Content-Type
+      ResourceId: !Ref apiGeneralResource
+      RestApiId: !GetAtt apiGateway.RestApiId
