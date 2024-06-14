@@ -84,7 +84,7 @@ Resources:
           - Effect: Allow
             Principal: "*"
             Action: "execute-api:Invoke"
-            Resource: "execute-api:/GET/*"
+            Resource: "execute-api:/*"
 
   apiRootGET:
     Type: AWS::ApiGateway::Method
@@ -119,3 +119,4 @@ Resources:
     Type: AWS::ApiGateway::Deployment
     Properties:
       RestApiId: !GetAtt apiGateway.RestApiId
+      StageName: v1
