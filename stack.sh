@@ -49,12 +49,26 @@ delete() {
     echo "Deleting stack $STACK_NAME and its resources..."
 
     # First must delete the bucket:
-    aws s3 rb --force s3://$WEB_BUCKET_NAME
+    aws s3 rb --force s3://$WEB_BUCKET_NAME &> /dev/null
 
     aws cloudformation delete-stack --stack-name $STACK_NAME
-    if [[ "$?" -eq 0 ]]; then
-        echo "Deleted $STACK_NAME"
-    fi
+
+
+    STACK_DELETED=
+    while [[ -z $STACK_DELETED ]]; do
+        export STACK_DELETED=$(aws aws cloudformation list-stacks | \
+        python3 -c \
+"import sys, json
+complete = True
+for item in json.load(sys.stdin)['StackSummaries']:
+    if item['StackName'] == '$STACK_NAME' and item['StackStatus'] != 'DELETE_COMPLETE':
+        complete = False
+if complete:
+    print('true')")
+        sleep 1
+    done
+
+    echo "Deleted $STACK_NAME"
 }
 
 create() {
