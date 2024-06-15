@@ -36,3 +36,4 @@ echo ""
 echo "The API Gateway URL is:"
 echo $GATEWAY_URL
 echo ""
+# Note: must go to GATEWAY_URL/<stage (e.g. v1)> to access the actual website

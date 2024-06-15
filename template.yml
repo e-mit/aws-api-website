@@ -250,9 +250,8 @@ Resources:
         LogGroup: !Ref lambdaLogGroup
       InlineCode: |
           import json
-          def handler(event, context):
+          def handler(event, _):
               print(event)
-              print(context)
               return {
           "statusCode": 200,
           "headers": {"X-test": "Test"},
