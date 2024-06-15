@@ -33,6 +33,8 @@ Add extra website files with:
 ```aws s3 cp <local file name> s3://${WEB_BUCKET_NAME}/<public file name>```
 
 
-## To delete
+## To Delete All Resources
 
 Run ```/stack.sh $STACK_NAME delete $WEB_BUCKET_NAME```
+
+This will also delete the S3 bucket contents.
