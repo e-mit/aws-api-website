@@ -99,7 +99,6 @@ create() {
 
     # upload the static website files to the bucket:
     aws s3 cp index.html s3://${WEB_BUCKET_NAME}/index.html
-    aws s3 cp error.html s3://${WEB_BUCKET_NAME}/error.html
     aws s3 cp /home/e/Documents/q.png s3://${WEB_BUCKET_NAME}/q.png
 }
 

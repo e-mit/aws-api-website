@@ -95,6 +95,17 @@ Resources:
             Action: "execute-api:Invoke"
             Resource: "execute-api:/*"
 
+  apiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - apiStaticGET
+      - apiRootGET
+      - apiStaticRootGET
+      - apiMethod
+    Properties:
+      RestApiId: !GetAtt apiGateway.RestApiId
+      StageName: !Ref stageName
+
   apiRootGET:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -121,23 +132,21 @@ Resources:
       ResourceId: !GetAtt apiGateway.RootResourceId
       RestApiId: !GetAtt apiGateway.RestApiId
 
-  apiDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-      - apiGeneralGET
-      - apiRootGET
+  apiStaticPath:
+    Type: AWS::ApiGateway::Resource
     Properties:
+      ParentId: !GetAtt apiGateway.RootResourceId
+      PathPart: 'static'
       RestApiId: !GetAtt apiGateway.RestApiId
-      StageName: !Ref stageName
 
-  apiGeneralResource:
+  apiStaticResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref apiStaticPath
       PathPart: '{object}'
       RestApiId: !GetAtt apiGateway.RestApiId
 
-  apiGeneralGET:
+  apiStaticGET:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
@@ -164,17 +173,10 @@ Resources:
               method.response.header.Content-Length: integration.response.header.Content-Length
               method.response.header.Content-Type: integration.response.header.Content-Type
               method.response.header.Content-Encoding: integration.response.header.Content-Encoding
-      ResourceId: !Ref apiGeneralResource
+      ResourceId: !Ref apiStaticResource
       RestApiId: !GetAtt apiGateway.RestApiId
 
-  apiStaticPath:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt apiGateway.RootResourceId
-      PathPart: 'static'
-      RestApiId: !GetAtt apiGateway.RestApiId
-
-  apiStaticMethod:
+  apiStaticRootGET:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
@@ -199,3 +201,79 @@ Resources:
               method.response.header.Content-Encoding: integration.response.header.Content-Encoding
       ResourceId: !Ref apiStaticPath
       RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiRootPath:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt apiGateway.RootResourceId
+      PathPart: 'api'
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiPath:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref apiRootPath
+      PathPart: '{path+}'
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      MethodResponses:
+        - StatusCode: '200'
+      Integration:
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${theLambda.Arn}/invocations"
+        IntegrationResponses:
+          - StatusCode: '200'
+      ResourceId: !Ref apiPath
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  theLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join
+        - '-'
+        - - !Ref stackName
+          - "lambda"
+      Handler: index.handler
+      Runtime: python3.10
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      LoggingConfig:
+        LogFormat: Text
+        LogGroup: !Ref lambdaLogGroup
+      InlineCode: |
+          import json
+          def handler(event, context):
+              print(event)
+              print(context)
+              return {
+          "statusCode": 200,
+          "headers": {"X-test": "Test"},
+          "body": json.dumps({ "message" : "Hello."}),
+          }
+
+  lambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupClass: STANDARD
+      RetentionInDays: 3
+      LogGroupName: !Join
+        - '-'
+        - - !Ref stackName
+          - "lambda-log"
+
+  theLambdaPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+    - apiGateway
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref theLambda
+      Principal: apigateway.amazonaws.com
