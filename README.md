@@ -11,7 +11,7 @@ A private S3 bucket is created, which hosts files to form a public static websit
 
 The website's default homepage is accessed via the root URL: ```{GATEWAY_URL}/{stage}```, where the default stage is "v1". This page is provided by the "index.html" file in the S3 bucket.
 
-All other website files are accessed via ```{GATEWAY_URL}/{stage}/static/{filename}```, where "filename" is the name used for the file in the S3 bucket.
+All other website files are accessed via ```{GATEWAY_URL}/{stage}/static/{filename}```, where "filename" is the name used for the file in the S3 bucket. The static root ```static/``` also redirects to index.html.
 
 Accessing non-existent files will not result in a 404 error but instead will give a 200 status with an XML error message. Accessing paths other than ```/static/{}``` will give a 403 forbidden error.
 
