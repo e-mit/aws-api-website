@@ -19,9 +19,6 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Ref bucketName
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
 
   bucketPolicy:
     Type: AWS::S3::BucketPolicy
