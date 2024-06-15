@@ -61,7 +61,11 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: "s3:GetObject"
-                Resource: "*"
+                Resource: !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - !Ref bucketName
+                    - /*
 
   apiGateway:
     Type: AWS::ApiGateway::RestApi
