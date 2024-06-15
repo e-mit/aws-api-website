@@ -3,13 +3,13 @@
 # Run this script to deploy the project on AWS
 
 export AWS_REGION=eu-west-3
-export STACK_NAME=webtest2
+export STACK_NAME=webtest1
 
 export STAGE_NAME=v1
 
 # Optional: custom domain settings.
 # Must then update the custom DNS records with the new cloudfront URL.
-export USE_CUSTOM_DOMAIN=false
+export USE_CUSTOM_DOMAIN=true
 export DOMAIN_NAME=mtest.dev
 export DOMAIN_CERT_ARN="define this"
 

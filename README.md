@@ -4,6 +4,8 @@ This project creates an API Gateway which serves a public REST API and a public 
 
 All resources are deployed in a single CloudFormation stack, which can be created or deleted via single commands.
 
+Optionally, a custom domain name can be configured as the gateway URL.
+
 
 ## Static Website
 
@@ -32,6 +34,8 @@ Run ```source setup.sh```
 Add extra website files with:
 ```aws s3 cp <local file name> s3://${WEB_BUCKET_NAME}/<public file name>```
 
+Website paths map to simulated S3 folders by putting slashes in ```<public file name>```. For example, uploading a file named "a/b/c.html" will make it accessible at ```{GATEWAY_URL}/{stage}/static/a/b/c.html```.
+
 
 ## To Delete All Resources
 
@@ -40,11 +44,11 @@ Run ```/stack.sh $STACK_NAME delete $WEB_BUCKET_NAME```
 This will also delete the S3 bucket contents.
 
 
-## Optional: Use a Custom Domain Name
+## Optional: Using a Custom Domain Name
 
 ### Certificate setup: manual process
 
-1. Sign in to the AWS Certificate Manager console **and set the region to us-east-1**.
+1. Sign in to the AWS Certificate Manager console **and set the region to us-east-1** (mandatory region).
 2. Choose "Request a certificate".
 3. Enter the custom domain name for the API in "Domain name".
 4. Choose "Review, request and confirm".
