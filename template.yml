@@ -18,6 +18,30 @@ Parameters:
     MinLength: 1
     MaxLength: 50
     Default: v1
+  enableCustomDomainName:
+    Description: Whether to use the custom domain name
+    Default: false
+    Type: String
+    AllowedValues:
+      - true
+      - false
+  domainName:
+    Description: The custom domain name
+    Type: String
+    MinLength: 1
+    MaxLength: 50
+    Default: "x"
+  certificateArn:
+    Description: The ARN of the DNS certificate for the custom domain name
+    Type: String
+    MinLength: 1
+    MaxLength: 100
+    Default: "x"
+
+Conditions:
+  useCustomDomain: !Equals
+    - !Ref enableCustomDomainName
+    - true
 
 Resources:
 
@@ -78,7 +102,7 @@ Resources:
     Properties:
       BinaryMediaTypes:
         - "*/*"
-      DisableExecuteApiEndpoint: false
+      DisableExecuteApiEndpoint: !Ref enableCustomDomainName
       EndpointConfiguration:
         Types:
           - "EDGE"
@@ -276,3 +300,24 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref theLambda
       Principal: apigateway.amazonaws.com
+
+  customDomain:
+    Type: AWS::ApiGateway::DomainName
+    Condition: useCustomDomain
+    Properties:
+      DomainName: !Ref domainName
+      CertificateArn: !Ref certificateArn
+      SecurityPolicy: TLS_1_2
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  basePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Condition: useCustomDomain
+    DependsOn:
+      - customDomain
+    Properties:
+      DomainName: !Ref domainName
+      RestApiId: !GetAtt apiGateway.RestApiId
+      Stage: !Ref stageName

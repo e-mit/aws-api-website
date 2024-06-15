@@ -38,3 +38,26 @@ Add extra website files with:
 Run ```/stack.sh $STACK_NAME delete $WEB_BUCKET_NAME```
 
 This will also delete the S3 bucket contents.
+
+
+## Optional: Use a Custom Domain Name
+
+### Certificate setup: manual process
+
+1. Sign in to the AWS Certificate Manager console **and set the region to us-east-1**.
+2. Choose "Request a certificate".
+3. Enter the custom domain name for the API in "Domain name".
+4. Choose "Review, request and confirm".
+5. In AWS Certificate Manager, copy the CNAME name/values of the pending certificate and paste into the domain provider's system as a new CNAME record. The certificate will remain pending until the DNS updates (up to 48 hours).
+6. Copy the certificate ARN for later use.
+
+### Stack creation
+
+1. Run ```source setup.sh``` as usual, but set ```USE_CUSTOM_DOMAIN=true``` and provide the domain name and certificate ARN.
+2. An intermediate (cloudfront) URL is created by AWS. Obtain this URL and use it to create a new CNAME record (for a subdomain) or a new ALIAS record (for the root domain) in the domain provider's system.
+3. Wait for the DNS to update.
+
+### Important notes
+
+- This process disables the usual API Gateway URL, so the website can only be accessed via the custom domain name.
+- The intermediate cloudfront URL **can** be accessed directly, as a test, **but must have the request ```Host``` header set to the custom domain**. Therefore it cannot be tested with simple web browser use.

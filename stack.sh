@@ -12,10 +12,16 @@ entryFuncs=("delete" "create")
 # "create": Create the stack. An error occurs if a stack already
 #           exists with the provided name, and no update occurs.
 
+# For command=create, the optional 4th argument is a space-separated list
+# of parameter-overrides to pass to cloudformation deploy,
+# which become template parameters.
+
 ############################################################
 
 STACK_NAME=$1
 WEB_BUCKET_NAME=$3
+
+ARG4=$4
 
 if [[ -z $STACK_NAME ]]; then
     echo ERROR: Please set STACK_NAME
@@ -87,7 +93,7 @@ create() {
     --template-file out.yml \
     --stack-name $STACK_NAME \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides stackName=$STACK_NAME bucketName=$WEB_BUCKET_NAME
+    --parameter-overrides stackName=$STACK_NAME bucketName=$WEB_BUCKET_NAME $ARG4
 
     if [[ "$?" -ne 0 ]]; then
         aws cloudformation describe-stack-events \
