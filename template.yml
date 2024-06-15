@@ -12,6 +12,12 @@ Parameters:
     Type: String
     MinLength: 1
     MaxLength: 50
+  stageName:
+    Description: The REST API stage (version) name
+    Type: String
+    MinLength: 1
+    MaxLength: 50
+    Default: v1
 
 Resources:
 
@@ -122,7 +128,7 @@ Resources:
       - apiRootGET
     Properties:
       RestApiId: !GetAtt apiGateway.RestApiId
-      StageName: v1
+      StageName: !Ref stageName
 
   apiGeneralResource:
     Type: AWS::ApiGateway::Resource
