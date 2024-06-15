@@ -133,7 +133,7 @@ Resources:
   apiGeneralResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !GetAtt apiGateway.RootResourceId
+      ParentId: !Ref apiStaticPath
       PathPart: '{object}'
       RestApiId: !GetAtt apiGateway.RestApiId
 
@@ -165,4 +165,37 @@ Resources:
               method.response.header.Content-Type: integration.response.header.Content-Type
               method.response.header.Content-Encoding: integration.response.header.Content-Encoding
       ResourceId: !Ref apiGeneralResource
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiStaticPath:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt apiGateway.RootResourceId
+      PathPart: 'static'
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiStaticMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Content-Type: true
+            method.response.header.Content-Length: true
+            method.response.header.Content-Encoding: false
+      Integration:
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS
+        Credentials: !GetAtt getBucketRole.Arn
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/${bucketName}/index.html"
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Content-Length: integration.response.header.Content-Length
+              method.response.header.Content-Type: integration.response.header.Content-Type
+              method.response.header.Content-Encoding: integration.response.header.Content-Encoding
+      ResourceId: !Ref apiStaticPath
       RestApiId: !GetAtt apiGateway.RestApiId
