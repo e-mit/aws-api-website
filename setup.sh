@@ -4,7 +4,6 @@
 
 export AWS_REGION=eu-west-3
 export STACK_NAME=webtest2
-
 export STAGE_NAME=v1
 
 # Optional: connect to an existing lambda to implement the API

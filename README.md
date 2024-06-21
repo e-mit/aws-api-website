@@ -4,7 +4,9 @@ This project creates an API Gateway which serves a public REST API and a public 
 
 All resources are deployed in a single CloudFormation stack, which can be created or deleted via single commands.
 
-Optionally, a custom domain name can be configured as the gateway URL.
+Optional features:
+- Configure a custom domain name for the gateway URL.
+- Connect to an existing lambda to implement the API, rather than create a new one.
 
 
 ## Static Website
