@@ -3,15 +3,20 @@
 # Run this script to deploy the project on AWS
 
 export AWS_REGION=eu-west-3
-export STACK_NAME=webtest1
+export STACK_NAME=webtest2
 
 export STAGE_NAME=v1
 
+# Optional: connect to an existing lambda to implement the API
+# (else create a simple lambda as part of the stack)
+export USE_EXTERNAL_LAMBDA=true
+export EXTERNAL_LAMBDA_ARN="arn:aws:lambda:eu-west-3:637423608549:function:externaltest"
+
 # Optional: custom domain settings.
 # Must then update the custom DNS records with the new cloudfront URL.
-export USE_CUSTOM_DOMAIN=true
+export USE_CUSTOM_DOMAIN=false
 export DOMAIN_NAME=mtest.dev
-export DOMAIN_CERT_ARN="define this"
+export DOMAIN_CERT_ARN="define_this"
 
 ##################################################################
 
@@ -22,11 +27,9 @@ export WEB_BUCKET_NAME="${STACK_NAME}-bucket-${RAND_ID}"
 # Prevent terminal output waiting:
 export AWS_PAGER=""
 
-if [ "$USE_CUSTOM_DOMAIN" == "true" ]; then
-    source stack.sh $STACK_NAME create $WEB_BUCKET_NAME "stageName=$STAGE_NAME enableCustomDomainName=true domainName=$DOMAIN_NAME certificateArn=$DOMAIN_CERT_ARN"
-else
-    source stack.sh $STACK_NAME create $WEB_BUCKET_NAME stageName=$STAGE_NAME
-fi
+source stack.sh $STACK_NAME create $WEB_BUCKET_NAME "stageName=$STAGE_NAME \
+    enableCustomDomainName=$USE_CUSTOM_DOMAIN domainName=$DOMAIN_NAME certificateArn=$DOMAIN_CERT_ARN \
+    useExistingLambda=$USE_EXTERNAL_LAMBDA existingLambdaArn=$EXTERNAL_LAMBDA_ARN"
 
 echo ""
 echo "Waiting for stack creation..."
@@ -65,3 +68,7 @@ for item in json.load(sys.stdin)['items']:
     echo $CLOUDFRONT_URL
     echo ""
 fi
+
+echo "Upload website files to the following S3 bucket:"
+echo "WEB_BUCKET_NAME = $WEB_BUCKET_NAME"
+echo ""

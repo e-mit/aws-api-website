@@ -39,7 +39,7 @@ Website paths map to simulated S3 folders by putting slashes in ```<public file 
 
 ## To Delete All Resources
 
-Run ```/stack.sh $STACK_NAME delete $WEB_BUCKET_NAME```
+Run ```./stack.sh $STACK_NAME delete $WEB_BUCKET_NAME```
 
 This will also delete the S3 bucket contents.
 

@@ -37,11 +37,29 @@ Parameters:
     MinLength: 1
     MaxLength: 100
     Default: "x"
+  useExistingLambda:
+    Description: Whether to use an existing lambda for the API, specified by the input ARN
+    Default: false
+    Type: String
+    AllowedValues:
+      - true
+      - false
+  existingLambdaArn:
+    Description: The ARN of the existing lambda to use, if useExistingLambda == true
+    Type: String
+    MinLength: 1
+    MaxLength: 100
+    Default: "x"
 
 Conditions:
   useCustomDomain: !Equals
     - !Ref enableCustomDomainName
     - true
+  useExternalLambda: !Equals
+    - !Ref useExistingLambda
+    - true
+  createLambda:
+    !Not [Condition: useExternalLambda]
 
 Resources:
 
@@ -251,7 +269,10 @@ Resources:
         IntegrationHttpMethod: POST
         PassthroughBehavior: WHEN_NO_MATCH
         Type: AWS_PROXY
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${theLambda.Arn}/invocations"
+        Uri: !If
+          - useExternalLambda
+          - !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${existingLambdaArn}/invocations"
+          - !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${theLambda.Arn}/invocations"
         IntegrationResponses:
           - StatusCode: '200'
       ResourceId: !Ref apiPath
@@ -259,6 +280,7 @@ Resources:
 
   theLambda:
     Type: AWS::Serverless::Function
+    Condition: createLambda
     Properties:
       FunctionName: !Join
         - '-'
@@ -298,9 +320,12 @@ Resources:
     - apiGateway
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref theLambda
+      FunctionName: !If
+        - useExternalLambda
+        - !Ref existingLambdaArn
+        - !GetAtt theLambda.Arn
       Principal: apigateway.amazonaws.com
-      SourceArn: !GetAtt apiGateway.Arn
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway.RestApiId}/*/*/*"
 
   customDomain:
     Type: AWS::ApiGateway::DomainName
