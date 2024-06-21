@@ -300,6 +300,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref theLambda
       Principal: apigateway.amazonaws.com
+      SourceArn: !GetAtt apiGateway.Arn
 
   customDomain:
     Type: AWS::ApiGateway::DomainName
