@@ -136,14 +136,15 @@ Resources:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - apiStaticGET
-      - apiRootGET
+      - apiBaseRootGET
       - apiStaticRootGET
       - apiMethod
+      - apiRootGET
     Properties:
       RestApiId: !GetAtt apiGateway.RestApiId
       StageName: !Ref stageName
 
-  apiRootGET:
+  apiBaseRootGET:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
@@ -251,6 +252,26 @@ Resources:
     Properties:
       ParentId: !Ref apiRootPath
       PathPart: '{path+}'
+      RestApiId: !GetAtt apiGateway.RestApiId
+
+  apiRootGET:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      MethodResponses:
+        - StatusCode: '200'
+      Integration:
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri: !If
+          - useExternalLambda
+          - !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${existingLambdaArn}/invocations"
+          - !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${theLambda.Arn}/invocations"
+        IntegrationResponses:
+          - StatusCode: '200'
+      ResourceId: !Ref apiRootPath
       RestApiId: !GetAtt apiGateway.RestApiId
 
   apiMethod:
