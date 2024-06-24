@@ -93,7 +93,7 @@ create() {
     --template-file out.yml \
     --stack-name $STACK_NAME \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides stackName=$STACK_NAME bucketName=$WEB_BUCKET_NAME $ARG4
+    --parameter-overrides bucketName=$WEB_BUCKET_NAME $ARG4
 
     if [[ "$?" -ne 0 ]]; then
         aws cloudformation describe-stack-events \
