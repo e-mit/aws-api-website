@@ -9,13 +9,13 @@ export STAGE_NAME=v1
 # Optional: connect to an existing lambda to implement the API
 # (else create a simple lambda as part of the stack)
 export USE_EXTERNAL_LAMBDA=false
-export EXTERNAL_LAMBDA_ARN="put ARN here"
+export EXTERNAL_LAMBDA_ARN="put_ARN_here"
 
 # Optional: custom domain settings.
 # Must then update the custom DNS records with the new cloudfront URL.
 export USE_CUSTOM_DOMAIN=false
 export DOMAIN_NAME=mtest.dev
-export DOMAIN_CERT_ARN="put ARN here"
+export DOMAIN_CERT_ARN="put_ARN_here"
 
 # Optional: enable captcha protection for any API paths containing a chosen string
 # Also choose how long the valid captcha lasts.
