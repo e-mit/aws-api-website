@@ -7,6 +7,7 @@ All resources are deployed in a single CloudFormation stack, which can be create
 Optional features:
 - Configure a custom domain name for the gateway URL.
 - Connect to an existing lambda to implement the API, rather than create a new one.
+- Restrict access to any URL path containing a chosen string by requiring a CAPTCHA.
 
 
 ## Static Website
@@ -44,6 +45,21 @@ Website paths map to simulated S3 folders by putting slashes in ```<public file 
 Run ```./stack.sh $STACK_NAME delete $WEB_BUCKET_NAME```
 
 This will also delete the S3 bucket contents.
+
+
+## CAPTCHA support
+
+Any URL path containing ```CAPTCHA_PATH_STRING``` will require a CAPTCHA to be solved before accessing. After being solved, access will be allowed for ```CAPTCHA_TIME_SECONDS```.
+
+Accessing the URL directly will return a 405 error and an Amazon-generated challenge page. Solving the captcha then forwards the browser to the URL.
+
+Alternatively, the CAPTCHA can be custom-generated in javascript, as demonstrated in test_captcha.html.
+This requires manual setup as follows:
+1. Go to AWS WAF > "application integration" in AWS console
+2. Copy the captcha integration javascript tag, and put it in the page head
+3. Generate an apiKey for the domain, and paste into the javascript code
+
+Note: the CAPTCHA setup method is the same even if using a custom domain name (CloudFront involvement has no effect).
 
 
 ## Optional: Using a Custom Domain Name

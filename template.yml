@@ -45,6 +45,18 @@ Parameters:
     MinLength: 1
     MaxLength: 100
     Default: "x"
+  captchaPathString:
+    Description: Any API paths *containing* this string will be protected with a captcha
+    Type: String
+    MinLength: 1
+    MaxLength: 50
+    Default: "/captcha"
+  captchaImmunitySeconds:
+    Description: The time duration for which a completed captcha is valid
+    Type: Number
+    MinValue: 60
+    MaxValue: 259200
+    Default: 60
 
 Conditions:
   useCustomDomain: !Equals
@@ -363,3 +375,48 @@ Resources:
       DomainName: !Ref domainName
       RestApiId: !GetAtt apiGateway.RestApiId
       Stage: !Ref stageName
+
+  webACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      DefaultAction:
+        Allow: {}
+      Name: !Join
+        - '-'
+        - - !Ref "AWS::StackName"
+          - "web-acl"
+      Rules:
+        - Name: !Join
+          - '-'
+          - - !Ref "AWS::StackName"
+            - "web-acl-rule"
+          Action:
+            Captcha: {}
+          CaptchaConfig:
+            ImmunityTimeProperty:
+              ImmunityTime: !Ref captchaImmunitySeconds
+          Priority: 0
+          Statement:
+            ByteMatchStatement:
+              FieldToMatch:
+                UriPath: {}
+              PositionalConstraint: CONTAINS
+              SearchString: !Ref captchaPathString
+              TextTransformations:
+                - Priority: 0
+                  Type: NONE
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: false
+            MetricName: !Join
+              - '-'
+              - - !Ref "AWS::StackName"
+                - "web-acl-rule-metric"
+            SampledRequestsEnabled: false
+      Scope: REGIONAL
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: false
+        MetricName: !Join
+          - '-'
+          - - !Ref "AWS::StackName"
+            - "web-acl-metric"
+        SampledRequestsEnabled: false

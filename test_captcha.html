@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Captcha JS API</title>
+    <script type="text/javascript" src="https://ae19887525f8.eu-west-3.captcha-sdk.awswaf.com/ae19887525f8/jsapi.js" defer></script>
+</head>
+
+<body>
+    <button id="render-captcha-btn" onClick="onClickRenderCaptcha()">Render Captcha</button>
+    <div id="captcha-container"></div>
+    <button id="fetch-data-btn" style="display: none" onClick="fetchProtectedData()">Fetch data</button>
+    <div id="pets-container"></div>
+    <div id="error-container"></div>
+
+    <script>
+        /* This is a captcha example provided by AWS; have set up in AWS console as follows:
+        Under "application integration":
+        - copy the captcha integration JS tag, and put it in the page head
+        - generate an apiKey for the relevant domain, and paste into the JS code below
+        NB: can also do a direct GET to the protected endpoint: it returns a 405 code and
+        provides an amazon captcha page, which redirects to the endpoint if solved correctly.
+        */
+        function setError(error) {
+            document.getElementById("error-container").innerHTML = error.message;
+        }
+
+        function onClickRenderCaptcha() {
+            const container = document.getElementById('captcha-container');
+            AwsWafCaptcha.renderCaptcha(container, {
+                apiKey: "fRfA4keyACz134NdUif+A4XtEoGI9pkX89WrRZDep5M0Qremi34I/8Kiqe05bslbT+gsA5XXIiY+nm5F5Zu2VtSB5+GRepo58cCdq6PMvYtPtY+9QnPfVFBFkhMz2FVFgHZLFWQMwPbUsBHL+M/FwGk/RT4WQtq6hWa/q/4TJZ5m9Blf/IT9TpWTBtGYMeYb3AgYEQ2LOCtTZVdTuriOM4QPpb5UWOJ6h9GcwM9onDbvqV7xW/pRTK3i0FW8DoATf4nYt/mzoNoezx43ZcAUS4eIr5Z6mOE+jPweAhol94kb4a4C9JWd2FR8cAKYiThX8G0Uw5lOdl6fPakdWw7Ayo8KdjpTs7BtBPfP2e6hIE122qmZIToAB31PRvv1/5uDKE3CuvSf4fcHvu/AHBlPN+IQ/aeOKENSG3jvZ7bk+6jKxLTh1ZRZ4G1wqzs5FM2MyTFAp0uKfo4K97SxO68PSPjjn6oPBZSez5WcNY8Zpld16xa8/PLmDZv495o4wtu+hsPtJ0Y0/890n6U0K/C7ueS5D/EiDdTySkcEIsoCX+F/7KUTOEgCElbYC8390l/0dsZFhFFFfcZXrCe4y3o9NEmY0ZSXA5F4aVRo0holQOxbU7EtexqGK/DNoyjyx5BjjrZd9KmPxTF1mZ1lKMEXcEbfFiUSbVEe9P16CgCKbsI=_0_1",
+                onSuccess: () => {
+                    document.getElementById("fetch-data-btn").style.display = 'block';
+                },
+                onError: setError,
+            });
+        }
+
+        function fetchProtectedData() {
+            AwsWafIntegration.fetch('../api/captcha', {
+                method: 'GET'
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    document.getElementById('pets-container').textContent = JSON.stringify(data);
+                })
+                .catch(setError);
+        }
+    </script>
+</body>
+
+</html>

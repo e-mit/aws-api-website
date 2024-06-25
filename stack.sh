@@ -100,12 +100,18 @@ create() {
         --stack-name $STACK_NAME
     fi
 
+    echo "Waiting for stack creation to complete..."
+    aws cloudformation wait stack-create-complete \
+        --stack-name $STACK_NAME --no-paginate
+    echo "Done."
+
     aws s3 rb --force s3://$TEMP_BUCKET_NAME
     echo Deleted the temporary S3 bucket
 
     # upload the static website files to the bucket:
     aws s3 cp index.html s3://${WEB_BUCKET_NAME}/index.html
     aws s3 cp image.png s3://${WEB_BUCKET_NAME}/image.png
+    aws s3 cp test_captcha.html s3://${WEB_BUCKET_NAME}/test_captcha.html
 }
 
 ################################################
